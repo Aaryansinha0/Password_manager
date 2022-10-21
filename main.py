@@ -1,11 +1,35 @@
+import json
 from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 
 
-#_PASSWORD GENERATOR_#
+# ---------------------------- SEARCH PASSWORD ------------------------------- #
 
+
+def search_password():
+    website_name = website_entry.get()
+    try:
+        with open("password_data.json") as data:
+            file = json.load(data)
+
+    except FileNotFoundError:
+        messagebox.showerror(title="Ewwwwww", message="File not Found")
+    else:
+        if website_name in file:
+            user_email = file[website_name]["Email: "]
+            user_password = file[website_name]["Password: "]
+
+            messagebox.showinfo(title=f"{website_name}", message=f"Email: {user_email} \n"
+                                                                 f"Password: {user_password}")
+        else:
+            messagebox.showinfo(title="Not found", message=f"Sorry, You haven't added \n"
+                                                           f"Email And Password of {website_name}")
+
+
+# ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def password_generator():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
                'v',
@@ -34,27 +58,38 @@ def password_generator():
     pyperclip.copy(s_password)
 
 
-#_PASSWORD SAVER_#
-
+# ---------------------------- SAVE PASSWORD ------------------------------- #
 def save_password():
     website_name = website_entry.get()
     user_email = username_entry.get()
     user_password = password_entry.get()
+    new_data = {
+        website_name: {
+            "Email: ": user_email,
+            "Password: ": user_password
+        }
+    }
+
     if len(user_password) == 0 or len(website_name) == 0:
         messagebox.showerror(title="something went wrong!", message="hey, you have left a box empty")
     else:
-        is_right = messagebox.askokcancel(title=f"{website_name}",
-                                          message=f"Email :{user_email} \n Password: {user_password} \n"
-                                                  f"Do You wanna save this? ")
-        if is_right:
-            with open("password_manager.txt", "a") as file:
-                file.write(f"({website_name} | {user_email} | {user_password}) \n")
+        try:
+            with open("password_data.json", "r") as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            with open("password_data.json", "w") as file:
+                json.dump(new_data, file, indent=4)
+        else:
+            data.update(new_data)
+
+            with open("password_data.json", "w") as file:
+                json.dump(data, file, indent=4)
+        finally:
             website_entry.delete(0, END)
             password_entry.delete(0, END)
 
 
-#_UI SETUP_#
-
+# ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
 window.title("Password Manager")
 window.config(pady=40, padx=40)
@@ -67,9 +102,12 @@ canvas.grid(column=1, row=1)
 website = Label(text="Website :", font=("Arial", 10, "bold"))
 website.grid(column=0, row=2)
 
-website_entry = Entry(width=39)
+website_entry = Entry(width=21)
 website_entry.focus()
-website_entry.grid(column=1, row=2, columnspan=2)
+website_entry.grid(column=1, row=2)
+
+website_search = Button(text="Search Password", command=search_password)
+website_search.grid(column=2, row=2)
 
 username = Label(text="Email/Username :", font=("Arial", 10, "bold"))
 username.grid(column=0, row=3)
